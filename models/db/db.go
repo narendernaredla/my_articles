@@ -1,41 +1,44 @@
 package db
 
 import (
-	"fmt"
-	"os"
+	"context"
+	"log"
+	"my_blogs/utils"
+	"sync"
+	"time"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql" //mysql pkg
-	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var db *gorm.DB
+//DB Client Instance
+var db *mongo.Client
+var once sync.Once
 
-func init() {
-
-	e := godotenv.Load()
-	if e != nil {
-		fmt.Print(e)
-	}
-
-	// username := os.Getenv("db_user")
-	// password := os.Getenv("db_pass")
-	// dbName := os.Getenv("db_name")
-	// dbHost := os.Getenv("db_host")
-	dbType := os.Getenv("db_type")
-	// dbPort := os.Getenv("db_port")
-
-	// dbURI := fmt.Sprintf("%s:%s@%s:%s/%s?charset=utf8", username, password, dbHost, dbPort, dbName)
-
-	conn, err := gorm.Open(dbType, "root:root@123@/my_articles_db?charset=utf8")
+func ConnectDB() *mongo.Client {
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017/my_articles?retryWrites=true&w=majority"))
 	if err != nil {
-		fmt.Print(err)
+		log.Fatal(err)
 	}
 
-	db = conn
+	ctx, _ := context.WithTimeout(context.TODO(), 10*time.Second)
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//ping the database
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	utils.Logger.Info("Connected to DB")
+	return client
 }
 
-//GetDB ... get db connection
-func GetDB() *gorm.DB {
-	return db
+func GetDB() *mongo.Database {
+	once.Do(func() {
+		db = ConnectDB()
+	})
+	return db.Database("my_articles")
 }

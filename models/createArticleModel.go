@@ -14,7 +14,7 @@ type CreateArticleRequestModel struct {
 }
 
 type CreateArticleResponseModel struct {
-	Id string
+	Id string `json:"id"`
 }
 
 func (reqModel *CreateArticleRequestModel) Validate() error {
@@ -22,12 +22,12 @@ func (reqModel *CreateArticleRequestModel) Validate() error {
 }
 
 func (reqModel *CreateArticleRequestModel) Create() (CreateArticleResponseModel, error) {
-	utils.Logger.Info("createArticleRequestModel::Create() :: Entered")
+	utils.Logger.Info("createArticleModel::Create() :: Entered")
 	article := &db.Article{}
 	article.Title = reqModel.Title
 	article.Author = reqModel.Author
 	article.Content = reqModel.Content
 	articleId, err := article.Create()
-	utils.Logger.Info("createArticleRequestModel::Create() :: Returing respose to caller")
+	utils.Logger.Info("createArticleModel::Create() :: Returing respose to caller")
 	return CreateArticleResponseModel{Id: articleId}, err
 }
