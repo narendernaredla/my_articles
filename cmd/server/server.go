@@ -1,8 +1,9 @@
-package main
+package server
 
 import (
 	"my_blogs/handlers"
-	"my_blogs/utils"
+	"my_blogs/models/db"
+	"my_blogs/service"
 	"net/http"
 	"os"
 
@@ -10,15 +11,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func main() {
-
+func NewServer() *http.Server {
 	router := mux.NewRouter()
 
-	utils.InitLogger()
+	articleCollection := db.NewCollectionHelper()
+	articleModel := db.NewArticleModel(articleCollection)
 
-	utils.Logger.Info("Started.....")
-
-	articleHandlers := handlers.NewArticleHandler()
+	articleService := service.NewArticleService(articleModel)
+	articleHandlers := handlers.NewArticleHandler(articleService)
 
 	router.HandleFunc("/articles", articleHandlers.CreateArticle).Methods("POST")
 	router.HandleFunc("/articles/{articleId}", articleHandlers.GetArticlesById).Methods("GET")
@@ -33,9 +33,9 @@ func main() {
 	methods := gorillaHandlers.AllowedMethods([]string{"GET", "POST"})
 	origins := gorillaHandlers.AllowedOrigins([]string{"*"})
 
-	err := http.ListenAndServe(":"+port, gorillaHandlers.CORS(headers, methods, origins)(router))
-	if err != nil {
-		utils.Logger.Fatalf("Failed to start server: %v", err)
+	server := http.Server{
+		Addr:    ":" + port,
+		Handler: gorillaHandlers.CORS(headers, methods, origins)(router),
 	}
-
+	return &server
 }

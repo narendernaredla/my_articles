@@ -2,22 +2,32 @@ package handlers
 
 import (
 	"encoding/json"
-	"my_blogs/models"
+	"my_blogs/service"
 	"my_blogs/utils"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
-type articleHandler struct{}
-
-func NewArticleHandler() *articleHandler {
-	return &articleHandler{}
+type ArticleHandler struct {
+	articleService service.IArticleService
 }
 
-func (a *articleHandler) CreateArticle(w http.ResponseWriter, r *http.Request) {
-	utils.Logger.Info("articleHandlers::CreateArticle() :: Entered")
-	createArticleReq := &models.CreateArticleRequestModel{}
+type CreateArticleRequestModel struct {
+	Title   string `json:"title" validate:"required"`
+	Content string `json:"content" validate:"required"`
+	Author  string `json:"author" validate:"required"`
+}
+
+func NewArticleHandler(articleService service.IArticleService) *ArticleHandler {
+	return &ArticleHandler{
+		articleService: articleService,
+	}
+}
+
+func (a *ArticleHandler) CreateArticle(w http.ResponseWriter, r *http.Request) {
+	utils.Logger.Info("articleHandlers::CreateArticle() :: Entered", a.articleService)
+	createArticleReq := &service.CreateArticleRequestModel{}
 	err := json.NewDecoder(r.Body).Decode(createArticleReq)
 	if err != nil {
 		utils.Logger.Errorf("articleHandlers::CreateArticle() :: Failed to read payload. %v", err)
@@ -27,14 +37,15 @@ func (a *articleHandler) CreateArticle(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.Logger.Infof("articleHandlers::CreateArticle() :: Received Payload: %+v", createArticleReq)
 
-	if err := createArticleReq.Validate(); err != nil {
+	if err := a.articleService.Validate(createArticleReq); err != nil {
 		utils.Logger.Errorf("articleHandlers::CreateArticle() :: Error validating request. %v", err)
 		resp := utils.FormatResponse(http.StatusBadRequest, "Missing required fields", nil)
 		utils.SendResponse(w, resp, http.StatusBadRequest)
 		return
 	}
 
-	createArticleResp, err := createArticleReq.Create()
+	createArticleResp, err := a.articleService.Create(createArticleReq)
+
 	if err != nil {
 		utils.Logger.Errorf("articleHandlers::CreateArticle() :: Error while creating article: %v", err)
 		resp := utils.FormatResponse(http.StatusInternalServerError, err.Error(), nil)
@@ -42,12 +53,12 @@ func (a *articleHandler) CreateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.Logger.Info("articleHandlers::CreateArticle() :: Sending response to user")
+	utils.Logger.Infof("articleHandlers::CreateArticle() :: Sending response to user %v", createArticleResp)
 	resp := utils.FormatResponse(http.StatusCreated, "Success", createArticleResp)
 	utils.SendResponse(w, resp, http.StatusCreated)
 }
 
-func (a *articleHandler) GetArticlesById(w http.ResponseWriter, r *http.Request) {
+func (a *ArticleHandler) GetArticlesById(w http.ResponseWriter, r *http.Request) {
 	utils.Logger.Info("articleHandlers::GetArticlesById() :: Entered")
 	params := mux.Vars(r)
 	articleId := params["articleId"]
@@ -59,11 +70,11 @@ func (a *articleHandler) GetArticlesById(w http.ResponseWriter, r *http.Request)
 		utils.SendResponse(w, resp, http.StatusBadRequest)
 		return
 	}
-	getArticleResp, err := models.GetArticleById(articleId)
+	getArticleResp, err := a.articleService.GetArticleById(articleId)
 	if err != nil {
 		utils.Logger.Errorf("articleHandlers::GetArticlesById() :: Error while reading article by id: %v, Error: %v", articleId, err)
 		if err.Error() == "no document found" {
-			resp := utils.FormatResponse(http.StatusOK, err.Error(), nil)
+			resp := utils.FormatResponse(http.StatusOK, err.Error(), getArticleResp)
 			utils.SendResponse(w, resp, http.StatusOK)
 		} else {
 			resp := utils.FormatResponse(http.StatusInternalServerError, err.Error(), nil)
@@ -76,14 +87,18 @@ func (a *articleHandler) GetArticlesById(w http.ResponseWriter, r *http.Request)
 	utils.SendResponse(w, resp, http.StatusOK)
 }
 
-func (a *articleHandler) GetArticles(w http.ResponseWriter, r *http.Request) {
+func (a *ArticleHandler) GetArticles(w http.ResponseWriter, r *http.Request) {
 	utils.Logger.Info("articleHandlers::GetArticles() :: Entered")
-
-	getAllArticleResp, err := models.GetAllArticles()
+	getAllArticleResp, err := a.articleService.GetAllArticles()
 	if err != nil {
 		utils.Logger.Errorf("articleHandlers::GetArticles() :: Error while reading all articles: %v", err)
-		resp := utils.FormatResponse(http.StatusInternalServerError, err.Error(), nil)
-		utils.SendResponse(w, resp, http.StatusInternalServerError)
+		if err.Error() == "no documents found" {
+			resp := utils.FormatResponse(http.StatusOK, err.Error(), getAllArticleResp)
+			utils.SendResponse(w, resp, http.StatusOK)
+		} else {
+			resp := utils.FormatResponse(http.StatusInternalServerError, err.Error(), nil)
+			utils.SendResponse(w, resp, http.StatusInternalServerError)
+		}
 		return
 	}
 	utils.Logger.Info("articleHandlers::GetArticles() :: Sending response to user")
