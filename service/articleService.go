@@ -42,24 +42,24 @@ func NewArticleService(articleModel db.IArticle) IArticleService {
 	}
 }
 
-func (svc *ArticleService) Validate(articleReq *CreateArticleRequestModel) error {
+func (articleSvc *ArticleService) Validate(articleReq *CreateArticleRequestModel) error {
 	return validator.New().Struct(articleReq)
 }
 
-func (svc *ArticleService) Create(articleReq *CreateArticleRequestModel) (CreateArticleResponseModel, error) {
-	utils.Logger.Info("ArticleService::Create() :: Entered", svc.articleModel)
+func (articleSvc *ArticleService) Create(articleReq *CreateArticleRequestModel) (CreateArticleResponseModel, error) {
+	utils.Logger.Info("ArticleService::Create() :: Entered", articleSvc.articleModel)
 	article := &models.ArticleModel{}
 	article.Title = articleReq.Title
 	article.Author = articleReq.Author
 	article.Content = articleReq.Content
-	articleId, err := svc.articleModel.Create(article)
+	articleId, err := articleSvc.articleModel.Create(article)
 	utils.Logger.Info("ArticleService::Create() :: Returing respose to caller")
 	return CreateArticleResponseModel{Id: articleId}, err
 }
 
-func (svc *ArticleService) GetArticleById(id string) (GetArticleResponseModel, error) {
+func (articleSvc *ArticleService) GetArticleById(id string) (GetArticleResponseModel, error) {
 	utils.Logger.Info("ArticleService::GetArticleById() :: Entered")
-	getArticleByIdResp, err := svc.articleModel.GetById(id)
+	getArticleByIdResp, err := articleSvc.articleModel.GetById(id)
 	var getArticleResp = GetArticleResponseModel{}
 	if err == nil {
 		getArticleResp = ConvertToViewObject(getArticleByIdResp)
@@ -68,10 +68,10 @@ func (svc *ArticleService) GetArticleById(id string) (GetArticleResponseModel, e
 	return getArticleResp, err
 }
 
-func (svc *ArticleService) GetAllArticles() ([]GetArticleResponseModel, error) {
+func (articleSvc *ArticleService) GetAllArticles() ([]GetArticleResponseModel, error) {
 	utils.Logger.Info("ArticleService::GetAllArticles() :: Entered")
 	var getAllArticleObj = []GetArticleResponseModel{}
-	getAllArticleResp, err := svc.articleModel.GetAll()
+	getAllArticleResp, err := articleSvc.articleModel.GetAll()
 	for _, val := range getAllArticleResp {
 		getArticleResp := ConvertToViewObject(val)
 		getAllArticleObj = append(getAllArticleObj, getArticleResp)

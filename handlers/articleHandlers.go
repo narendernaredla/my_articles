@@ -77,7 +77,7 @@ func (a *ArticleHandler) GetArticlesById(w http.ResponseWriter, r *http.Request)
 			resp := utils.FormatResponse(http.StatusOK, err.Error(), getArticleResp)
 			utils.SendResponse(w, resp, http.StatusOK)
 		} else {
-			resp := utils.FormatResponse(http.StatusInternalServerError, err.Error(), nil)
+			resp := utils.FormatResponse(http.StatusInternalServerError, err.Error(), getArticleResp)
 			utils.SendResponse(w, resp, http.StatusInternalServerError)
 		}
 		return
@@ -96,7 +96,7 @@ func (a *ArticleHandler) GetArticles(w http.ResponseWriter, r *http.Request) {
 			resp := utils.FormatResponse(http.StatusOK, err.Error(), getAllArticleResp)
 			utils.SendResponse(w, resp, http.StatusOK)
 		} else {
-			resp := utils.FormatResponse(http.StatusInternalServerError, err.Error(), nil)
+			resp := utils.FormatResponse(http.StatusInternalServerError, err.Error(), getAllArticleResp)
 			utils.SendResponse(w, resp, http.StatusInternalServerError)
 		}
 		return

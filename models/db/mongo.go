@@ -72,9 +72,9 @@ func (helper *CollectionHelper) Create(ctx context.Context, article *models.Arti
 
 func (helper *CollectionHelper) FindOne(ctx context.Context, filter interface{}) (models.ArticleModel, error) {
 	var article models.ArticleModel
-	err := GetDB().Collection("articles").FindOne(context.TODO(), filter).Decode(&article)
-	if err != nil {
-		return article, errors.New("no document found")
+	err := GetDB().Collection("articles").FindOne(context.TODO(), filter).Decode(&article).Error()
+	if err != "nil" {
+		return article, errors.New(err)
 	}
 	return article, nil
 }

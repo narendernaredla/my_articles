@@ -48,6 +48,10 @@ func (a *Article) GetById(id string) (models.ArticleModel, error) {
 	article, err = a.articleCollection.FindOne(context.TODO(), bson.M{"_id": objectID})
 	if err != nil {
 		utils.Logger.Errorf("articleModel::GetById() :: Error while reading article. %v", err)
+		return article, errors.New("failed to read article")
+	}
+	if article.Title == "" {
+		utils.Logger.Errorf("articleModel::GetById() :: Error while reading article. %v", err)
 		return article, errors.New("no document found")
 	}
 	utils.Logger.Info("articleModel::GetById() :: returning caller")
