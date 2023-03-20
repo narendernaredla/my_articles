@@ -1,0 +1,30 @@
+---
+
+version: '3'
+services:
+  mongo:
+    container_name: myarticles_db
+    image: "mongo:4.2.24"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: rootadmin
+      MONGO_INITDB_ROOT_PASSWORD: rootadminpassword
+      MONGO_INITDB_DATABASE: root-db
+    command: --auth
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data_container:/data/db
+      - ./create-user.js:/create-user.js
+  api:
+    container_name: myarticles_api
+    build: .
+    environment:
+      MONGOURI: mongodb://root:rootpassword@mongo:27017/myarticles?retryWrites=true&w=majority
+      PORT: "8080"
+    ports:
+      - 8080:8080
+    depends_on:
+      - mongo
+
+volumes:
+  mongodb_data_container:

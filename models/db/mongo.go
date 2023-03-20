@@ -6,6 +6,7 @@ import (
 	"log"
 	"my_blogs/models"
 	"my_blogs/utils"
+	"os"
 	"sync"
 	"time"
 
@@ -29,7 +30,11 @@ type CollectionHelper struct {
 }
 
 func ConnectDB() *mongo.Client {
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017/my_articles?retryWrites=true&w=majority"))
+	mongoURI := os.Getenv("MONGOURI")
+	if mongoURI == "" {
+		mongoURI = "mongodb://root:rootpassword@localhost:27017/myarticles?retryWrites=true&w=majority"
+	}
+	client, err := mongo.NewClient(options.Client().ApplyURI(mongoURI))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,7 +60,7 @@ func GetDB() *mongo.Database {
 	once.Do(func() {
 		db = ConnectDB()
 	})
-	return db.Database("my_articles")
+	return db.Database("myarticles")
 }
 
 func NewCollectionHelper() ICollectionHelper {
@@ -65,6 +70,7 @@ func NewCollectionHelper() ICollectionHelper {
 func (helper *CollectionHelper) Create(ctx context.Context, article *models.ArticleModel) (string, error) {
 	result, err := GetDB().Collection("articles").InsertOne(ctx, article)
 	if err != nil {
+		utils.Logger.Errorf("CollectionHelper::Create :: Error while creating article %v", err)
 		return "", errors.New("failed to create article")
 	}
 	return result.InsertedID.(primitive.ObjectID).Hex(), nil
@@ -72,9 +78,10 @@ func (helper *CollectionHelper) Create(ctx context.Context, article *models.Arti
 
 func (helper *CollectionHelper) FindOne(ctx context.Context, filter interface{}) (models.ArticleModel, error) {
 	var article models.ArticleModel
-	err := GetDB().Collection("articles").FindOne(context.TODO(), filter).Decode(&article).Error()
-	if err != "nil" {
-		return article, errors.New(err)
+	err := GetDB().Collection("articles").FindOne(context.TODO(), filter).Decode(&article)
+	if err != nil && err.Error() != "mongo: no documents in result" {
+		utils.Logger.Errorf("CollectionHelper::FindOne :: Error while reading article %v", err)
+		return article, err
 	}
 	return article, nil
 }
@@ -83,6 +90,7 @@ func (helper *CollectionHelper) FindAll(ctx context.Context) ([]models.ArticleMo
 	var allArticles []models.ArticleModel
 	cur, err := GetDB().Collection("articles").Find(ctx, bson.M{})
 	if err != nil {
+		utils.Logger.Errorf("CollectionHelper::FindAll :: Error while reading articles %v", err)
 		return allArticles, errors.New("failed to read articles")
 	}
 	defer cur.Close(context.TODO())
