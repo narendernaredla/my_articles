@@ -1,11 +1,19 @@
-FROM golang:1.17.7 as builder
+FROM golang:1.17.7-alpine as builder
 
 WORKDIR /myarticles/
 
 COPY . .
 
-RUN go build -o myarticles /myarticles/cmd/main.go
+RUN go mod download
+
+RUN go build -o myarticle /myarticles/cmd/main.go
+
+FROM alpine:latest
+
+WORKDIR /myarticles/
+
+COPY --from=builder /myarticles/myarticle /myarticles/myarticle
 
 EXPOSE 8080
 
-CMD ./myarticles
+CMD ./myarticle
