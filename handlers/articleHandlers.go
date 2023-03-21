@@ -26,7 +26,7 @@ func NewArticleHandler(articleService service.IArticleService) *ArticleHandler {
 }
 
 func (a *ArticleHandler) CreateArticle(w http.ResponseWriter, r *http.Request) {
-	utils.Logger.Info("articleHandlers::CreateArticle() :: Entered", a.articleService)
+	utils.Logger.Info("articleHandlers::CreateArticle() :: Entered")
 	createArticleReq := &service.CreateArticleRequestModel{}
 	err := json.NewDecoder(r.Body).Decode(createArticleReq)
 	if err != nil {

@@ -27,7 +27,7 @@ func NewArticleModel(collection ICollectionHelper) IArticle {
 }
 
 func (a *Article) Create(article *models.ArticleModel) (string, error) {
-	utils.Logger.Info("articleModel::Create() :: Entered", a.articleCollection)
+	utils.Logger.Info("articleModel::Create() :: Entered")
 	insertId, err := a.articleCollection.Create(context.TODO(), article)
 	if err != nil {
 		utils.Logger.Errorf("articleModel::Create() :: Error while creating article. %v", err)

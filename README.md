@@ -32,3 +32,5 @@ You can configure application port & mongo credentials using env variables
  You run the unit test using the following cmd
 
  `go test ./... --tags=integration`
+
+ Run `docker-compose up` to brign mongo up before running integration test

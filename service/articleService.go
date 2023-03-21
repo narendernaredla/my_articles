@@ -47,7 +47,7 @@ func (articleSvc *ArticleService) Validate(articleReq *CreateArticleRequestModel
 }
 
 func (articleSvc *ArticleService) Create(articleReq *CreateArticleRequestModel) (CreateArticleResponseModel, error) {
-	utils.Logger.Info("ArticleService::Create() :: Entered", articleSvc.articleModel)
+	utils.Logger.Info("ArticleService::Create() :: Entered")
 	article := &models.ArticleModel{}
 	article.Title = articleReq.Title
 	article.Author = articleReq.Author
